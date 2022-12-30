@@ -1,2 +1,5 @@
 *.txt
 *.pkl
+__pycache__
+*.ipynb
+downloads
