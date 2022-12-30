@@ -31,6 +31,14 @@ def write_dataframe_to_csv(dataframe, filename):
   dataframe.to_csv(filename, index=False)
   
   
+def get_starting_point(filename):
+    try:
+        temp = pd.read_csv(filename)
+        start = temp.shape[0]
+        return start
+    except:
+        return 0
+  
 def get_posts_from_blog(user_name):
     blog_name = user_name + ".tumblr.com"
     USER_FOLDER = os.path.join(DOWNLOAD_PATH, user_name)
@@ -43,7 +51,12 @@ def get_posts_from_blog(user_name):
         pass
     CSV_FILE = os.path.join(USER_FOLDER, user_name + ".csv")
     
-    for i in tqdm(range(0, total_posts, limit)):
+    START = get_starting_point(CSV_FILE)
+    if total_posts - START <= 60:
+      print("Already downloaded")
+      return
+    
+    for i in tqdm(range(START, total_posts, limit)):
         if i%1000 == 0:
             write_dataframe_to_csv(post_dataframe, CSV_FILE)
         response = client.posts(blog_name, offset=i, limit=50)
