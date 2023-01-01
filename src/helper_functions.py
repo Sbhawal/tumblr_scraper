@@ -1,4 +1,5 @@
 from src.constants import *
+from src.downloader import *
 import os, re
 from tqdm import tqdm
 import warnings
@@ -29,6 +30,7 @@ def add_to_dataframe(response):
 
 def write_dataframe_to_csv(dataframe, filename):
   dataframe.to_csv(filename, index=False)
+  # print("Dataframe written to csv")
   
   
 def get_starting_point(filename):
@@ -44,22 +46,34 @@ def get_posts_from_blog(user_name):
     USER_FOLDER = os.path.join(DOWNLOAD_PATH, user_name)
     response = client.posts(blog_name)
     total_posts = response['total_posts']
-    print("Total posts: ", total_posts)
     try:
         os.makedirs(USER_FOLDER)
     except FileExistsError:
         pass
     CSV_FILE = os.path.join(USER_FOLDER, user_name + ".csv")
-    
-    START = get_starting_point(CSV_FILE)
-    if total_posts - START <= 60:
-      print("Already downloaded")
-      return
+    START = 0
+    if total_posts >= 50:
+      
+      START = get_starting_point(CSV_FILE)
+      print("\nTotal posts: ", total_posts)
+      print("Starting from: ", START, '\n')
+      time.sleep(2)
+      
+      if total_posts - START <= 60:
+        print("Already downloaded")
+        return
     
     for i in tqdm(range(START, total_posts, limit)):
-        if i%1000 == 0:
+        if i%500 == 0 and i != 0:
             write_dataframe_to_csv(post_dataframe, CSV_FILE)
+            # print("\n\nStarting to download media files, Scraping Paused.\n")
+            # time.sleep(5)
+            # download_user_media(user_name, middle = True)
+            # print("\n\nResuming Scraping.\n")
         response = client.posts(blog_name, offset=i, limit=50)
         add_to_dataframe(response)
     write_dataframe_to_csv(post_dataframe, CSV_FILE)
-          
+    
+    print("\nCompleted scraping\n")
+    
+

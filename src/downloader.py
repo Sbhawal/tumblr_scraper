@@ -9,6 +9,7 @@ class MediaDownloader:
     def init(self, urls):
         self.urls = urls
         self.threads = []
+        self.middle = False
         self.download_path = DOWNLOAD_PATH
         # self.user_name = ''
         
@@ -21,16 +22,18 @@ class MediaDownloader:
         else:
             print("Error downloading file")
 
-    def run(self):
+    def run(self, downloaded_files):
         i = 0
         for url in tqdm(self.urls):
             file_name = url.split("/")[-1]
+            if file_name in downloaded_files:
+                continue
             thread = threading.Thread(target=self.download, args=(url, file_name))
             thread.start()
             self.threads.append(thread)
             i += 1
-            if i%200 == 0:
-                time.sleep(1)
+            if i%400 == 0:
+                time.sleep(60)
         
         for thread in self.threads:
             thread.join()
@@ -38,21 +41,24 @@ class MediaDownloader:
         print("All files have been downloaded.")
         
         
-    def start_down(self, urls, user_name):
+    def start_down(self, urls, user_name, middle = False):
+        if middle:
+            self.middle = True
         self.urls = urls
         self.threads = []
         self.download_path = os.path.join(DOWNLOAD_PATH, user_name)
-        self.run()
+        downloaded_files = os.listdir(self.download_path)
+        self.run(downloaded_files)
 
 
 downloader = MediaDownloader()
 
-def download_user_media(user_name):
+def download_user_media(user_name, middle = False):
     USER_FOLDER = os.path.join(DOWNLOAD_PATH, user_name)
     CSV_FILE = os.path.join(USER_FOLDER, user_name + ".csv")
     txt = ''
-    with open(CSV_FILE, 'r') as f:
+    with open(CSV_FILE, 'r', encoding='utf8') as f:
         txt = f.read()
-    to_match = 'https://64.media.tumblr.com/.*?\.jpg'
+    to_match = 'https://64.media.tumblr.com/.*?\.[jpgn]{3,4}'
     urls = re.findall(to_match, txt)
-    downloader.start_down(urls, user_name)
+    downloader.start_down(urls, user_name, middle)
