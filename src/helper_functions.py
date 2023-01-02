@@ -55,14 +55,15 @@ def get_posts_from_blog(user_name, stop=-1):
     if total_posts >= 50:
       
       START = get_starting_point(CSV_FILE)
+           
+      if total_posts - START <= 60:
+        print("Already scraped all posts")
+        return
+
       print("\nTotal posts: ", total_posts)
       print("Starting from: ", START, '\n')
       time.sleep(2)
       
-      if total_posts - START <= 60:
-        print("Already scraped all posts")
-        return
-    
     for i in tqdm(range(START, total_posts, limit)):
         if i%500 == 0 and i != 0:
             write_dataframe_to_csv(post_dataframe, CSV_FILE)

@@ -34,11 +34,12 @@ class MediaDownloader:
             thread.start()
             self.threads.append(thread)
             
-            # if i%400 == 0 and i != 0:
-            #     print("\nPausing download for 60 seconds\n")
-            #     time.sleep(10)
-            #     print("\nResuming download\n")
-            # i+=1
+            if i%400 == 0 and i != 0:
+                print("\nPausing download for 60 seconds\n")
+                time.sleep(10)
+                return
+                print("\nResuming download\n")
+            i+=1
         for thread in self.threads:
             thread.join()
         

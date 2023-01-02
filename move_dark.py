@@ -1,68 +1,60 @@
 import os, shutil
 import pandas as pd
-from PIL import Image
 from tqdm import tqdm
 import time, warnings
 warnings.filterwarnings("ignore")
 
 dest = r'C:\Users\mailt\Desktop\github_projects\folder_sync'
 CSV = "image_darkness.csv"
+done_files_txt = r"txt\done_files.txt"
 backup_loc = r'D:\tumblr'
 src = r'C:\Users\mailt\Desktop\github_projects\tumblr_scraper'
+
+try:
+    with open(done_files_txt, "r") as f:
+        done_files = f.read().split("\n")
+except:
+    with open(done_files_txt, "w") as f:
+        f.write("")
+    done_files = []
+    
+    
 
 df = pd.DataFrame(columns=['image', 'darkness'])
 if os.path.exists(CSV):
     df = pd.read_csv(CSV)
   
-def return_percent_image_dark(image_path):
-    img = Image.open(image_path)
-    img = img.convert('RGB')
-    width, height = img.size
-    pixels = img.load()
-    dark_pixels = 0
-    for x in range(width):
-        for y in range(height):
-            r, g, b = pixels[x, y]
-            if r < 100 and g < 100 and b < 100:
-                dark_pixels += 1
-    percent_dark = (dark_pixels / (width * height)) * 100
-    return percent_dark
-
-
-def add_entry_to_df(image, darkness):
+  
+def remove_done_files_from_db():
     global df
-    df = df.append({'image': image, 'darkness': darkness}, ignore_index=True)
-
-
-def save_df():
-    global df
+    global done_files
+    df = df[~df['image'].isin(done_files)]
     df.to_csv(CSV, index=False)
-    
-
-with open("include.txt", "r") as f:
-    include = f.read().split("\n")
-   
-def scrape_throught_src(src):
+ 
+def move_top_2_percentile():
     global df
-    image_paths = df['image'].tolist()
-    i = 0
-    for root, dirs, files in os.walk(src):
-        # print("\n", root)
-        if len(files) > 5 and "".join(include).count(root.split("\\")[-1]) != 0:
-            print(root.split("\\")[-1])
-            for file in tqdm(files):
-                try:
-                    file_path = os.path.join(root, file)
-                    if file_path not in image_paths:
-                        darkness = return_percent_image_dark(file_path)
-                        add_entry_to_df(file_path, darkness)
-                        image_paths.append(file_path)
-                        i+=1
-                        if i%100 == 0:
-                            save_df()
-                except:
-                    pass
+    global dest
+    global done_files
+    remove_done_files_from_db()
+    df = df.sort_values(by=['darkness'], ascending=False)
+    top_2_percentile = df['darkness'].quantile(0.98)
+    print("Total images: ", len(df))
+    print("Top 2 percentile values: ", top_2_percentile)
+    top_2_percentile_df = df[df['darkness'] >= top_2_percentile]
+    print("Total images in top 2 percentile: ", len(top_2_percentile_df))
+    for index, row in tqdm(top_2_percentile_df.iterrows()):
+        try:
+            image = row['image']
+            dest_path = os.path.join(dest, image.split("\\")[-1])
+            shutil.copy(image, dest_path)
+            done_files.append(image)
+        except Exception as e:
+            print(e)
+            pass
+    with open(done_files_txt, "w") as f:
+        f.write("\n".join(done_files))
 
-while True:
-    scrape_throught_src(src)
-    time.sleep(300)
+move_top_2_percentile()
+             
+             
+
