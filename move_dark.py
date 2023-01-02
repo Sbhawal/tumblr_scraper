@@ -38,13 +38,18 @@ def save_df():
     global df
     df.to_csv(CSV, index=False)
     
+
+with open("include.txt", "r") as f:
+    include = f.read().split("\n")
+   
 def scrape_throught_src(src):
     global df
     image_paths = df['image'].tolist()
     i = 0
     for root, dirs, files in os.walk(src):
         # print("\n", root)
-        if len(files) > 5:
+        if len(files) > 5 and "".join(include).count(root.split("\\")[-1]) != 0:
+            print(root.split("\\")[-1])
             for file in tqdm(files):
                 try:
                     file_path = os.path.join(root, file)
@@ -52,10 +57,12 @@ def scrape_throught_src(src):
                         darkness = return_percent_image_dark(file_path)
                         add_entry_to_df(file_path, darkness)
                         image_paths.append(file_path)
-                    if i%25 == 0:
-                        save_df()
+                        i+=1
+                        if i%100 == 0:
+                            save_df()
                 except:
                     pass
 
 while True:
     scrape_throught_src(src)
+    time.sleep(300)

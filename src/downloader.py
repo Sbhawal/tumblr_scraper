@@ -20,7 +20,8 @@ class MediaDownloader:
                 for chunk in r:
                     f.write(chunk)
         else:
-            print("Error downloading file")
+            # print("Error downloading file")
+            pass
 
     def run(self, downloaded_files):
         i = 0
@@ -28,13 +29,16 @@ class MediaDownloader:
             file_name = url.split("/")[-1]
             if file_name in downloaded_files:
                 continue
+                        
             thread = threading.Thread(target=self.download, args=(url, file_name))
             thread.start()
             self.threads.append(thread)
-            i += 1
-            if i%400 == 0:
-                time.sleep(60)
-        
+            
+            # if i%400 == 0 and i != 0:
+            #     print("\nPausing download for 60 seconds\n")
+            #     time.sleep(10)
+            #     print("\nResuming download\n")
+            # i+=1
         for thread in self.threads:
             thread.join()
         

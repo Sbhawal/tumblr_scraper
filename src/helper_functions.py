@@ -41,7 +41,7 @@ def get_starting_point(filename):
     except:
         return 0
   
-def get_posts_from_blog(user_name):
+def get_posts_from_blog(user_name, stop=-1):
     blog_name = user_name + ".tumblr.com"
     USER_FOLDER = os.path.join(DOWNLOAD_PATH, user_name)
     response = client.posts(blog_name)
@@ -60,7 +60,7 @@ def get_posts_from_blog(user_name):
       time.sleep(2)
       
       if total_posts - START <= 60:
-        print("Already downloaded")
+        print("Already scraped all posts")
         return
     
     for i in tqdm(range(START, total_posts, limit)):
@@ -70,8 +70,12 @@ def get_posts_from_blog(user_name):
             # time.sleep(5)
             # download_user_media(user_name, middle = True)
             # print("\n\nResuming Scraping.\n")
+        
         response = client.posts(blog_name, offset=i, limit=50)
         add_to_dataframe(response)
+        if i%stop == 0 and i != 0 and stop>0:
+          write_dataframe_to_csv(post_dataframe, CSV_FILE)
+          return
     write_dataframe_to_csv(post_dataframe, CSV_FILE)
     
     print("\nCompleted scraping\n")

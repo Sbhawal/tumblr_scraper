@@ -3,3 +3,6 @@
 __pycache__
 *.ipynb
 downloads
+*.csv
+tempCodeRunnerFile.py
+*,txt
